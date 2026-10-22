@@ -324,8 +324,13 @@ body.show-detail .detail-pane { display: block; }
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .source { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border: 1px solid var(--line); border-radius: var(--r-card); color: inherit; text-decoration: none; min-height: 56px; }
 .source .ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--tint-rose); color: var(--rose); }
+.source .ico { flex: none; }
 .source .ico svg { width: 20px; height: 20px; }
-.source span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.source > svg { width: 20px; height: 20px; flex: none; color: var(--muted); }
+.source .src-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fill-card { display: flex; flex-direction: column; gap: var(--s3); padding: var(--s4); border-radius: var(--r-card); background: var(--tint-yellow); }
+.fill-card p { margin: 0; font-size: var(--t-md); }
+.fill-card .btns { display: flex; gap: var(--s2); flex-wrap: wrap; }
 .source small { color: var(--muted); font-size: var(--t-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .actionbar {
   position: sticky; bottom: 0; z-index: 4; background: var(--glass); border-top: 1px solid var(--line);
@@ -1001,6 +1006,8 @@ body.show-detail .detail-pane { display: block; }
           <div class="lbl"><b>${plural(cur, "personne", "personnes")}</b><small>${factor !== 1 ? `Quantités recalculées · recette pour ${base}` : "Les quantités s'adaptent automatiquement"}</small></div>
           <div class="stepper"><button id="minus" aria-label="Une personne de moins" ${cur <= 1 ? "disabled" : ""}>${ICON.minus}</button><output aria-live="polite" class="sr-only">${plural(cur, "personne", "personnes")}</output><output aria-hidden="true">${cur}</output><button id="plus" aria-label="Une personne de plus">${ICON.plus}</button></div>
         </div>` : ""}
+        ${r.source && !(r.ingredients || []).length && !(r.etapes || []).length ? `<div class="fill-card"><p><b>La recette n'a pas pu être lue automatiquement.</b><br>${esc(sourceName(r.source))} a bloqué la lecture de la légende. Copie la légende de la publication (appui long dessus), puis touche « Coller la légende ».</p>
+          <div class="btns"><button class="btn btn-primary" id="fillClip">${ICON.paste}Coller la légende</button><button class="btn btn-secondary" id="fillManual">Saisir à la main</button></div></div>` : ""}
         <div class="cols">
           <section aria-labelledby="h-ing">
             <div class="section-h"><h3 id="h-ing">Ingrédients</h3><small>${base ? `pour ${plural(cur, "pers.", "pers.")}` : ""}</small></div>
@@ -1014,7 +1021,7 @@ body.show-detail .detail-pane { display: block; }
         </div>
         ${r.notes ? `<section><div class="section-h"><h3>Notes</h3></div><div class="notes">${esc(r.notes)}</div></section>` : ""}
         ${(r.tags || []).length ? `<section><div class="section-h"><h3>Mots-clés</h3></div><div class="tags">${r.tags.map((t) => `<span class="pill line">#${esc(t)}</span>`).join("")}</div></section>` : ""}
-        ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener"><span class="ico">${ICON.camera}</span><span><b>Voir la publication d'origine</b><small>${esc(sourceName(r.source))} · ${esc(r.source.replace(/^https?:\/\/(www\.)?/, ""))}</small></span>${ICON.chevron}</a>` : ""}
+        ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener"><span class="ico">${ICON.camera}</span><span class="src-txt"><b>Voir la publication d'origine</b><small>${esc(sourceName(r.source))} · ${esc(r.source.replace(/^https?:\/\/(www\.)?/, ""))}</small></span>${ICON.chevron}</a>` : ""}
       </div></article>
       <div class="actionbar wrap"><div class="actionbar-inner">
         <button class="btn btn-primary" id="planBtn">${ICON.cal}Ajouter au planning</button>
@@ -1028,6 +1035,15 @@ body.show-detail .detail-pane { display: block; }
     $("#editBtn").onclick = $("#editTop").onclick = () => openEditor(r);
     $("#planBtn").onclick = $("#planTop").onclick = () => openAddToPlan(r, cur || 2);
     $("#favBtn").onclick = () => { r.favori = !r.favori; save(); render(); toast(r.favori ? "Ajoutée aux favoris" : "Retirée des favoris"); };
+    const fc = $("#fillClip");
+    if (fc) {
+      fc.onclick = async () => {
+        let t = "";
+        try { t = await navigator.clipboard.readText(); } catch {}
+        if (t && t.trim().length > 15) fillFromText(r, t); else openPaste("", r.source, r);
+      };
+      $("#fillManual").onclick = () => openPaste("", r.source, r);
+    }
     if (base) {
       $("#minus").onclick = () => { state.portions = Math.max(1, cur - 1); renderDetail(); };
       $("#plus").onclick = () => { state.portions = cur + 1; renderDetail(); };
@@ -1039,6 +1055,17 @@ body.show-detail .detail-pane { display: block; }
     });
   }
 
+  // Complète une recette importée dont la légende n'avait pas pu être lue.
+  function fillFromText(r, text) {
+    const p = parseRecipe(text, r.source);
+    if (!p.ingredients.length && !p.etapes.length) { toast("Aucune recette trouvée dans ce texte"); return false; }
+    const generic = !r.titre || /^Recette (Instagram|Facebook|TikTok|lien)/.test(r.titre);
+    Object.assign(r, { ingredients: p.ingredients, etapes: p.etapes, notes: p.notes || r.notes, tags: p.tags.length ? p.tags : r.tags,
+      portions: p.portions || r.portions, prep: p.prep || r.prep, cuisson: p.cuisson || r.cuisson,
+      categorie: r.categorie || p.categorie, titre: generic && p.titre ? p.titre : r.titre });
+    state.portions = null; save(); render(); toast("Recette complétée, vérifie-la");
+    return true;
+  }
   function openRecipe(id, from) {
     state.view = "recettes"; state.selected = id; state.portions = null; state.from = from || null;
     render(); $("#detailPane").scrollTop = 0;
@@ -1437,7 +1464,7 @@ body.show-detail .detail-pane { display: block; }
     $("#addBlank").onclick = () => openEditor(null);
     $("#addPaste").onclick = () => openPaste();
   }
-  function openPaste(texte = "", lien = "") {
+  function openPaste(texte = "", lien = "", target = null) {
     openSheet(`
       <div class="sheet-head wrap"><button class="btn-text" id="cancelPaste">Annuler</button><h2>Coller une recette</h2><button class="btn-text" id="goPaste" style="font-weight:700">Continuer</button></div>
       <div class="sheet-body wrap">
@@ -1450,6 +1477,7 @@ body.show-detail .detail-pane { display: block; }
     $("#goPaste").onclick = $("#goPaste2").onclick = () => {
       const t = $("#p-text").value, u = $("#p-url").value.trim();
       if (!t.trim() && !u) { toast("Colle au moins un lien ou un texte"); return; }
+      if (target) { if (fillFromText(target, t)) closeSheet(); return; }
       openEditor(null, parseRecipe(t, u));
     };
   }
@@ -1492,6 +1520,9 @@ body.show-detail .detail-pane { display: block; }
         if (after) (h === "ing" ? ingredients : etapes).push(after);
         return;
       }
+      // Les formules d'accroche (« Hello tout le monde », « Nouvelle recette ! ») ne font pas un bon titre.
+      const accroche = /^(hello|hey|coucou|bonjour|bonsoir|salut|hi|yo)\b|^(nouvelle |petite )?recette( du jour| facile| rapide)?\s*[!:.]*$|^(abonne|abonnez|enregistre|enregistrez|partage|lien en bio|tag)/.test(n);
+      if (!titre && accroche) { notes.push(c); return; }
       if (!titre && c.length <= 80 && !parseQty(c)) { titre = c.replace(/[:!.]+$/, ""); return; }
       if (pr || cu) return;
       const step = c.replace(/^(\d+\s*[.)\-:]|[①-⑳]|etape \d+\s*:?)\s*/i, "");
