@@ -1006,8 +1006,8 @@ body.show-detail .detail-pane { display: block; }
           <div class="lbl"><b>${plural(cur, "personne", "personnes")}</b><small>${factor !== 1 ? `Quantités recalculées · recette pour ${base}` : "Les quantités s'adaptent automatiquement"}</small></div>
           <div class="stepper"><button id="minus" aria-label="Une personne de moins" ${cur <= 1 ? "disabled" : ""}>${ICON.minus}</button><output aria-live="polite" class="sr-only">${plural(cur, "personne", "personnes")}</output><output aria-hidden="true">${cur}</output><button id="plus" aria-label="Une personne de plus">${ICON.plus}</button></div>
         </div>` : ""}
-        ${r.source && !(r.ingredients || []).length && !(r.etapes || []).length ? `<div class="fill-card"><p><b>La recette n'a pas pu être lue automatiquement.</b><br>${esc(sourceName(r.source))} a bloqué la lecture de la légende. Copie la légende de la publication (appui long dessus), puis touche « Coller la légende ».</p>
-          <div class="btns"><button class="btn btn-primary" id="fillClip">${ICON.paste}Coller la légende</button><button class="btn btn-secondary" id="fillManual">Saisir à la main</button></div></div>` : ""}
+        ${r.source && !(r.ingredients || []).length && !(r.etapes || []).length ? `<div class="fill-card"><p><b>La recette n'a pas pu être lue automatiquement.</b><br>Touche « Relire la publication » pour réessayer. Sinon, copie la légende et touche « Coller la légende ».</p>
+          <div class="btns"><button class="btn btn-primary" id="fillRead">${ICON.link}Relire la publication</button><button class="btn btn-secondary" id="fillClip">${ICON.paste}Coller la légende</button><button class="btn btn-secondary" id="fillManual">Saisir à la main</button></div></div>` : ""}
         <div class="cols">
           <section aria-labelledby="h-ing">
             <div class="section-h"><h3 id="h-ing">Ingrédients</h3><small>${base ? `pour ${plural(cur, "pers.", "pers.")}` : ""}</small></div>
@@ -1043,6 +1043,15 @@ body.show-detail .detail-pane { display: block; }
         if (t && t.trim().length > 15) fillFromText(r, t); else openPaste("", r.source, r);
       };
       $("#fillManual").onclick = () => openPaste("", r.source, r);
+      $("#fillRead").onclick = async (e) => {
+        const b = e.currentTarget; b.disabled = true; b.lastChild.textContent = "Lecture…";
+        try {
+          const d = await lirePublication(r.source);
+          if (d.texte && fillFromText(r, d.texte)) { if (!r.photo && d.image) { r.photo = d.image; save(); render(); } return; }
+          toast("La publication n'a pas pu être lue");
+        } catch { toast("Lecture impossible pour le moment"); }
+        b.disabled = false; b.lastChild.textContent = "Relire la publication";
+      };
     }
     if (base) {
       $("#minus").onclick = () => { state.portions = Math.max(1, cur - 1); renderDetail(); };
@@ -1455,14 +1464,61 @@ body.show-detail .detail-pane { display: block; }
       <div class="sheet-head wrap"><span></span><h2>Ajouter une recette</h2><button class="btn-text" id="closeAdd">Fermer</button></div>
       <div class="sheet-body wrap">
         <div class="choice">
+          <button id="addLink"><span class="ico rose">${ICON.link}</span><span><b>Depuis un lien Instagram ou Facebook</b><small>Colle le lien de la publication : Yumi récupère le texte et la photo</small></span></button>
           <button id="addBlank"><span class="ico">${ICON.pen}</span><span><b>Écrire une recette</b><small>Remplir la fiche à la main</small></span></button>
-          <button id="addPaste"><span class="ico rose">${ICON.paste}</span><span><b>Coller depuis Instagram ou Facebook</b><small>Colle la légende et le lien : la fiche se remplit toute seule</small></span></button>
+          <button id="addPaste"><span class="ico">${ICON.paste}</span><span><b>Coller le texte d'une recette</b><small>Colle une légende ou un texte : la fiche se remplit toute seule</small></span></button>
         </div>
-        <p class="muted" style="margin:0;font-size:var(--t-sm)">Astuce : avec le raccourci « Ajouter à Yumi », partage directement une publication depuis Instagram.</p>
+        <p class="muted" style="margin:0;font-size:var(--t-sm)">Pour copier le lien : dans Instagram ou Facebook, touche ••• (ou Partager) sur la publication, puis « Copier le lien ».</p>
       </div>`);
     $("#closeAdd").onclick = closeSheet;
+    $("#addLink").onclick = () => openLink();
     $("#addBlank").onclick = () => openEditor(null);
     $("#addPaste").onclick = () => openPaste();
+  }
+  // Demande à la fonction Supabase « lire-publication » le texte et la photo d'une publication.
+  async function lirePublication(url) {
+    const c = { ...(window.RECETTES_CONFIG || {}) }, s = sync.cfg() || {};
+    const base = (s.url || c.supabaseUrl || "").replace(/\/+$/, ""), key = s.key || c.supabaseKey || "";
+    if (!base) throw new Error("config");
+    const r = await fetch(base + "/functions/v1/lire-publication", {
+      method: "POST", headers: { "Content-Type": "application/json", apikey: key }, body: JSON.stringify({ url }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.erreur || "http " + r.status);
+    return data;
+  }
+  function openLink(lien = "") {
+    openSheet(`
+      <div class="sheet-head wrap"><button class="btn-text" id="cancelLink">Annuler</button><h2>Depuis un lien</h2><span></span></div>
+      <form class="sheet-body wrap" id="linkForm" novalidate>
+        <label class="field"><span>Lien de la publication</span>
+          <div style="display:flex;gap:var(--s2)"><input class="input" id="l-url" type="url" inputmode="url" value="${esc(lien)}" placeholder="https://www.instagram.com/p/…" autocomplete="off" style="flex:1;min-width:0">
+          <button type="button" class="btn btn-secondary" id="l-paste">Coller</button></div></label>
+        <p class="err" id="l-err" role="alert" hidden></p>
+        <button class="btn btn-primary btn-block" type="submit" id="l-go">${ICON.link}Importer la recette</button>
+        <p class="muted" style="margin:0;font-size:var(--t-sm)">Yumi lit la légende et la photo de la publication, puis te montre la fiche à vérifier avant de l'enregistrer.</p>
+      </form>`);
+    $("#cancelLink").onclick = closeSheet;
+    $("#l-paste").onclick = async () => {
+      try { const t = await navigator.clipboard.readText(); const m = t.match(/https?:\/\/\S+/); $("#l-url").value = m ? m[0] : t.trim(); }
+      catch { $("#l-url").focus(); toast("Appuie longuement dans le champ puis « Coller »"); }
+    };
+    $("#linkForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const url = ($("#l-url").value.match(/https?:\/\/\S+/) || [""])[0], err = $("#l-err"), go = $("#l-go");
+      if (!/instagram\.com|facebook\.com|fb\.watch|fb\.com/.test(url)) { err.textContent = "Colle un lien Instagram ou Facebook."; err.hidden = false; return; }
+      err.hidden = true; go.disabled = true; go.lastChild.textContent = "Lecture de la publication…";
+      try {
+        const d = await lirePublication(url);
+        if (d.texte) { openEditor(null, { ...parseRecipe(d.texte, url), photo: d.image || "" }); return; }
+        err.textContent = "La publication n'a pas pu être lue (compte privé, ou Instagram a refusé). Tu peux coller son texte à la main.";
+      } catch (x) {
+        err.textContent = x.message === "config" ? "La synchro Supabase n'est pas configurée." : /fetch|load|network|http 404/i.test(x.message) ? "Le lecteur de publications n'est pas encore installé dans Supabase, ou la connexion a échoué." : x.message;
+      }
+      err.hidden = false; go.disabled = false; go.lastChild.textContent = "Réessayer";
+      if (!$("#l-manual")) go.insertAdjacentHTML("afterend", `<button type="button" class="btn btn-secondary btn-block" id="l-manual">Coller le texte à la main</button>`);
+      $("#l-manual").onclick = () => openPaste("", url);
+    };
   }
   function openPaste(texte = "", lien = "", target = null) {
     openSheet(`
@@ -1489,7 +1545,7 @@ body.show-detail .detail-pane { display: block; }
   }
   // Lit une légende de réseau social et en sort titre, ingrédients, étapes, mots-clés.
   function parseRecipe(text, url) {
-    const ta = document.createElement("textarea"); ta.innerHTML = String(text || ""); text = ta.value.replace(/\r/g, "");
+    const ta = document.createElement("textarea"); ta.innerHTML = String(text || ""); text = ta.value.replace(/\r/g, "").replace(/[\u2028\u2029]/g, "\n");
     // Légende lue par le raccourci : « 1 234 likes, 56 comments - compte on 3 octobre 2026: "…" »
     text = text.replace(/^[^\n"]*?(likes?|J’aime|J'aime|mentions? J’aime)[^\n"]*?:\s*"([\s\S]*?)"?\.?\s*$/i, "$2");
     if (!url) { const m = text.match(/https?:\/\/\S+/); if (m) url = m[0]; }
@@ -1535,18 +1591,24 @@ body.show-detail .detail-pane { display: block; }
     // Sans titres de section : les longues phrases deviennent des étapes.
     if (!etapes.length && notes.length) { etapes = notes.filter((x) => x.length > 25); notes = notes.filter((x) => x.length <= 25); }
     return {
-      titre: titre || (url ? "Recette " + sourceName(url) : ""), categorie: guessCategory(norm(text)), source: url || "",
+      titre: titre || (url ? "Recette " + sourceName(url) : ""), categorie: guessCategory(norm(text), norm(titre)), source: url || "",
       prep, cuisson, portions: portions || 4, ingredients, etapes, notes: notes.join("\n"), tags,
     };
   }
-  function guessCategory(n) {
+  // Devine la catégorie : les mots du titre comptent triple, le reste du texte départage.
+  function guessCategory(n, t = "") {
     const cats = categories().map(([c]) => c);
-    const rules = [[/gateau|cake|tarte|cookie|brownie|mousse|creme|dessert|chocolat|crepe|tiramisu|cheesecake/, "Desserts"],
-      [/soupe|veloute|potage/, "Soupes"], [/sauce|pesto|vinaigrette|mayonnaise/, "Sauces"],
-      [/pancake|granola|porridge|brunch|petit.dej/, "Petit-déjeuner"], [/salade|entree|tartinade|houmous/, "Entrées"],
-      [/cocktail|smoothie|boisson|limonade/, "Boissons"], [/poulet|boeuf|porc|poisson|saumon|pates|curry|gratin|risotto|plat/, "Plats"]];
-    const hit = rules.find(([re]) => re.test(n));
-    return hit ? (cats.find((c) => norm(c) === norm(hit[1])) || hit[1]) : "";
+    const rules = [[/gateau|cake|tarte (au|aux|a la) (citron|pomme|fraise|chocolat|poire)|tartelette|cookie|brownie|mousse au|creme (brulee|dessert|anglaise)|dessert|chocolat|crepe|tiramisu|cheesecake|muffin|clafoutis|fondant|biscuit|meringue/g, "Desserts"],
+      [/soupe|veloute|potage|bouillon de|minestrone|gaspacho/g, "Soupes"], [/sauce|pesto|vinaigrette|mayonnaise|aioli|chimichurri/g, "Sauces"],
+      [/pancake|granola|porridge|brunch|petit.dej|overnight|bowl cake|tartine/g, "Petit-déjeuner"], [/salade|entree|tartinade|houmous|verrine|tapenade|bruschetta|aperitif/g, "Entrées"],
+      [/cocktail|smoothie|boisson|limonade|mocktail/g, "Boissons"],
+      [/poulet|boeuf|porc|agneau|veau|poisson|saumon|cabillaud|crevette|pates|spaghetti|lasagne|curry|gratin|risotto|quiche|burger|pizza|pomme de terre|pommes de terre|riz|plat|wok|tajine|parmentier|steak|lentilles|pois chiches/g, "Plats"]];
+    let best = null, top = 0;
+    rules.forEach(([re, cat]) => {
+      const score = 3 * (t.match(re) || []).length + (n.match(re) || []).length;
+      if (score > top) { top = score; best = cat; }
+    });
+    return best ? (cats.find((c) => norm(c) === norm(best)) || best) : "";
   }
 
   // ---------- Apparence : automatique, clair ou sombre ----------
