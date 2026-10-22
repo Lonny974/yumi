@@ -114,10 +114,10 @@ svg { flex: none; }
 .fav-btn { color: var(--ink); }
 
 /* ---------- Pastilles ---------- */
-.chips { display: flex; gap: var(--s2); overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--s4)); padding: 2px var(--s4); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .chips::-webkit-scrollbar { display: none; }
 .chip {
-  flex: none; min-height: 36px; padding: 0 var(--s4); border-radius: var(--r-pill); border: 1px solid var(--line);
+  flex: none; min-height: 36px; padding: 0 var(--s3); border-radius: var(--r-pill); border: 1px solid var(--line);
   background: var(--surface); font-size: var(--t-md); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
   position: relative;
 }
@@ -239,9 +239,10 @@ body:not(.v-recettes) .app, body:not(.v-semaine) #planView, body:not(.v-courses)
 body.show-detail .list-pane { display: none; }
 body.show-detail .detail-pane { display: block; }
 .list-head { position: sticky; top: 0; z-index: 5; background: var(--bg); display: flex; flex-direction: column; gap: var(--s3); padding-bottom: var(--s3); }
-.filters { display: flex; gap: var(--s2); align-items: center; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--s4)); padding: 2px var(--s4); }
+.filters { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; }
 .filters::-webkit-scrollbar { display: none; }
 .filters .sep { width: 1px; height: 22px; background: var(--line); flex: none; }
+.select-pill.on { background-color: var(--primary); border-color: var(--primary); color: var(--on-primary); background-image: linear-gradient(45deg, transparent 50%, var(--on-primary) 50%), linear-gradient(135deg, var(--on-primary) 50%, transparent 50%); }
 .list-meta { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); font-size: var(--t-sm); color: var(--muted); }
 .cards { list-style: none; margin: 0; padding-block: var(--s1) var(--s8); display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: var(--s4) var(--s3); }
 .cards > li { min-width: 0; }
@@ -532,10 +533,12 @@ body.show-detail .detail-pane { display: block; }
       <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
       <div class="filters" role="group" aria-label="Filtres">
         <button class="chip fav" id="favFilter" aria-pressed="false"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/></svg>Favoris</button>
-        <span class="sep" aria-hidden="true"></span>
-        <button class="chip" data-time="15" aria-pressed="false">Moins de 15 min</button>
-        <button class="chip" data-time="30" aria-pressed="false">Moins de 30 min</button>
-        <button class="chip" data-time="60" aria-pressed="false">Moins d'1 h</button>
+        <select id="timeSel" class="select-pill" aria-label="Durée maximale">
+          <option value="0">Toutes durées</option>
+          <option value="15">Moins de 15 min</option>
+          <option value="30">Moins de 30 min</option>
+          <option value="60">Moins d'1 h</option>
+        </select>
       </div>
       <div class="list-meta">
         <span id="count" class="num" aria-live="polite"></span>
@@ -934,7 +937,7 @@ body.show-detail .detail-pane { display: block; }
     $("#chips").innerHTML = [`<button class="chip" data-cat="" aria-pressed="${!state.cat}">Toutes <span class="n">${recipes.length}</span></button>`]
       .concat(cats.map(([c, n]) => `<button class="chip" data-cat="${esc(c)}" aria-pressed="${state.cat === c}">${esc(c)}${n ? ` <span class="n">${n}</span>` : ""}</button>`)).join("");
     $("#favFilter").setAttribute("aria-pressed", state.fav);
-    document.querySelectorAll("[data-time]").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.time === state.maxTime));
+    $("#timeSel").value = String(state.maxTime); $("#timeSel").classList.toggle("on", !!state.maxTime);
     $("#qClear").hidden = !state.q;
   }
   function renderList() {
@@ -1646,7 +1649,7 @@ body.show-detail .detail-pane { display: block; }
   $("#qClear").addEventListener("click", () => { state.q = ""; $("#q").value = ""; $("#qClear").hidden = true; renderList(); $("#q").focus(); });
   $("#chips").addEventListener("click", (e) => { const b = e.target.closest(".chip"); if (!b) return; state.cat = b.dataset.cat; renderChips(); renderList(); });
   $("#favFilter").addEventListener("click", () => { state.fav = !state.fav; renderChips(); renderList(); });
-  document.querySelectorAll("[data-time]").forEach((b) => b.addEventListener("click", () => { const t = +b.dataset.time; state.maxTime = state.maxTime === t ? 0 : t; renderChips(); renderList(); }));
+  $("#timeSel").addEventListener("change", (e) => { state.maxTime = +e.target.value; renderChips(); renderList(); });
   $("#sort").addEventListener("change", (e) => { state.sort = e.target.value; renderList(); });
   $("#cards").addEventListener("click", (e) => {
     const a = e.target.closest("[data-act]");
