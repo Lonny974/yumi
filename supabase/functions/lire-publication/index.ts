@@ -17,7 +17,7 @@ const decode = (s: string) =>
   s.replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
     .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(+d))
     .replace(/&([a-z]+);/gi, (m, n) => ENTITES[n.toLowerCase()] ?? m)
-    .replace(/[\u2028\u2029]/g, "\n");
+    .split(String.fromCharCode(8232)).join("\n").split(String.fromCharCode(8233)).join("\n");
 
 function meta(html: string, nom: string) {
   const a = html.match(new RegExp(`<meta[^>]+(?:property|name)="${nom}"[^>]*content="([^"]*)"`, "i"));
