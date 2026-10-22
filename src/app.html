@@ -1,36 +1,36 @@
 <title>Yumi</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-/* Direction « Moderne & Épuré » : neutres froids, bleu en accent, violet pour les favoris. Grille de photos sur iPhone, deux colonnes sur iPad. */
+/* Direction « Frais & Moderne » : vert profond en accent, menthe, jaune et rose pour les favoris. Grille de photos sur iPhone, deux colonnes sur iPad. */
 :root {
-  --bg: #f9fafb;
+  --bg: #f6faf8;
   --surface: #ffffff;
-  --ink: #111827;
-  --muted: #6b7280;
-  --line: #e5e7eb;
-  --accent: #3b82f6;
-  --accent-soft: #eaf2fe;
+  --ink: #1b2b28;
+  --muted: #64746f;
+  --line: #e2ebe7;
+  --accent: #0f766e;
+  --accent-soft: #e3f5ef;
   --on-accent: #ffffff;
-  --gold: #8b5cf6;
+  --gold: #ec4899;
   --danger: #dc2626;
-  --shadow: 0 1px 2px rgba(17, 24, 39, .05), 0 8px 24px rgba(17, 24, 39, .06);
-  --font-display: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --shadow: 0 1px 2px rgba(15, 50, 45, .05), 0 8px 24px rgba(15, 50, 45, .07);
+  --font-display: "Plus Jakarta Sans", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --radius: 16px;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0b1120; --surface: #111827; --ink: #f9fafb; --muted: #9ca3af; --line: #1f2937;
-    --accent: #60a5fa; --accent-soft: #172554; --on-accent: #0b1120; --gold: #a78bfa; --danger: #f87171;
+    --bg: #0b1614; --surface: #12211e; --ink: #ecf5f2; --muted: #93a8a2; --line: #1f332f;
+    --accent: #34d399; --accent-soft: #123a31; --on-accent: #062a22; --gold: #f472b6; --danger: #f87171;
     --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0b1120; --surface: #111827; --ink: #f9fafb; --muted: #9ca3af; --line: #1f2937;
-  --accent: #60a5fa; --accent-soft: #172554; --on-accent: #0b1120; --gold: #a78bfa; --danger: #f87171;
+  --bg: #0b1614; --surface: #12211e; --ink: #ecf5f2; --muted: #93a8a2; --line: #1f332f;
+  --accent: #34d399; --accent-soft: #123a31; --on-accent: #062a22; --gold: #f472b6; --danger: #f87171;
   --shadow: 0 1px 2px rgba(0,0,0,.3), 0 6px 20px rgba(0,0,0,.25);
   color-scheme: dark;
 }
@@ -194,7 +194,7 @@ body.show-detail .detail-pane { display: block; }
 .thumb {
   width: 64px; height: 64px; border-radius: 12px; object-fit: cover; display: grid; place-items: center;
   font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; color: #fff;
-  background: linear-gradient(135deg, hsl(var(--h, 220) 90% 64%), hsl(calc(var(--h, 220) + 45) 85% 70%));
+  background: linear-gradient(135deg, hsl(var(--h, 160) 70% 45%), hsl(calc(var(--h, 160) + 25) 80% 58%));
 }
 .card-body { min-width: 0; }
 .card-title { font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -328,7 +328,7 @@ body.show-detail .detail-pane { display: block; }
       </label>
       <div class="chips" id="chips" role="toolbar" aria-label="Catégories"></div>
       <div class="filters">
-        <button class="chip" id="favFilter" aria-pressed="false">★ Favoris</button>
+        <button class="chip" id="favFilter" aria-pressed="false">♥ Favoris</button>
         <select id="timeFilter" aria-label="Durée">
           <option value="">Toutes durées</option>
           <option value="20">≤ 20 min</option>
@@ -592,8 +592,8 @@ body.show-detail .detail-pane { display: block; }
 
   const ICON = {
     clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
-    star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1L3.2 9.4l6.1-.8z"/></svg>',
-    starO: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1L3.2 9.4l6.1-.8z"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/></svg>',
+    starO: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-7.5-10.1A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 5-7 7 7 7"/></svg>',
     edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>',
     people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.8a3.5 3.5 0 0 1 0 6.4M18.5 14.8c1.6.8 2.6 2.4 3 5.2"/></svg>',
@@ -627,7 +627,7 @@ body.show-detail .detail-pane { display: block; }
   }
 
   // Teinte du visuel par défaut, stable pour une catégorie (bleus, violets, roses).
-  const hueOf = (c) => { let h = 0; for (const ch of norm(c || "")) h = (h * 31 + ch.charCodeAt(0)) % 997; return 190 + (h % 110); };
+  const hueOf = (c) => { let h = 0; for (const ch of norm(c || "")) h = (h * 31 + ch.charCodeAt(0)) % 997; return [150, 165, 180, 40, 25, 330][h % 6]; };   // vert, menthe, turquoise, jaune, orangé, rose
 
   // ---------- Rendu de la liste ----------
   function categories() {
