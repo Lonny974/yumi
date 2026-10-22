@@ -9,8 +9,8 @@ head = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F7FAF8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D171B" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -18,7 +18,7 @@ head = """<!doctype html>
 <link rel="apple-touch-icon" href="icons/icon-180.png">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
-<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:0}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}html{height:100%;box-sizing:border-box}</style>
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:0}body{margin:0;font:16px system-ui,sans-serif;background:#F7FAF8}@media (prefers-color-scheme:dark){body{background:#0D171B}}img{max-width:100%}[hidden]{display:none!important}html{height:100%;box-sizing:border-box}</style>
 </head>
 <body>
 """
@@ -27,11 +27,11 @@ cfg = "<script>window.RECETTES_CONFIG = " + cfg_file.read_text().strip() + ";</s
 (out / "index.html").write_text(head + cfg + body + "\n</body>\n</html>\n")
 (out / "manifest.webmanifest").write_text(json.dumps({
   "name": "Yumi", "short_name": "Yumi", "lang": "fr", "start_url": "./", "scope": "./",
-  "display": "standalone", "background_color": "#f9fafb", "theme_color": "#111827",
+  "display": "standalone", "background_color": "#F7FAF8", "theme_color": "#08796B",
   "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
 }, ensure_ascii=False, indent=2))
-(out / "sw.js").write_text("""const CACHE = "yumi-v3";
+(out / "sw.js").write_text("""const CACHE = "yumi-v4";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });

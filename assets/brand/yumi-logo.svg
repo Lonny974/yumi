@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 300">
+  <g transform="translate(0,0) scale(0.29)">
+    <rect width="1024" height="1024" rx="224" fill="#08796B"/>
+    <g fill="#FFFFFF">
+      <path d="M512 572 C414 536 346 457 356 352 C438 368 500 423 512 497 C524 423 586 368 668 352 C678 457 610 536 512 572Z"/>
+      <path d="M512 612 C446 612 395 588 362 548 C398 526 451 529 512 558 C573 529 626 526 662 548 C629 588 578 612 512 612Z"/>
+      <path d="M470 627 L554 627 L554 702 C554 723 537 740 516 740 L508 740 C487 740 470 723 470 702Z"/>
+      <path d="M376 760 Q512 808 648 760 L648 790 Q512 846 376 790Z"/>
+    </g>
+    <path d="M590 248 C626 202 680 183 722 193 C712 238 675 276 624 281Z" fill="#FFD879"/>
+  </g>
+  <text x="330" y="156" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="132" font-weight="800" letter-spacing="-5" fill="#075E56">Yumi</text>
+  <text x="336" y="211" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="500" fill="#536A68">Tes recettes. Tes repas. Tes courses.</text>
+</svg>

@@ -1,0 +1,44 @@
+/* Yumi design tokens — v1 */
+:root {
+  color-scheme: light;
+  --yumi-primary: #08796B;
+  --yumi-primary-strong: #064E49;
+  --yumi-mint: #2BBE9B;
+  --yumi-mint-soft: #A7E3C7;
+  --yumi-rose: #FF6B9D;
+  --yumi-yellow: #FFD879;
+  --yumi-bg: #F7FAF8;
+  --yumi-surface: #FFFFFF;
+  --yumi-surface-alt: #EEF5F2;
+  --yumi-text: #172927;
+  --yumi-text-secondary: #667875;
+  --yumi-border: #DDE8E3;
+  --yumi-success: #16866F;
+  --yumi-warning: #F2B544;
+  --yumi-danger: #D94B70;
+  --yumi-radius-card: 20px;
+  --yumi-radius-control: 14px;
+  --yumi-radius-pill: 999px;
+  --yumi-shadow-card: 0 6px 22px rgba(20, 58, 50, .07);
+  --yumi-font-heading: "Plus Jakarta Sans", sans-serif;
+  --yumi-font-body: "Inter", sans-serif;
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --yumi-primary: #2BBE9B;
+  --yumi-primary-strong: #A7E3C7;
+  --yumi-mint: #39D6AE;
+  --yumi-mint-soft: #17483F;
+  --yumi-rose: #FF7CA8;
+  --yumi-yellow: #FFD879;
+  --yumi-bg: #0D171B;
+  --yumi-surface: #142329;
+  --yumi-surface-alt: #1C3036;
+  --yumi-text: #F1F7F4;
+  --yumi-text-secondary: #A2B8B2;
+  --yumi-border: #294149;
+  --yumi-success: #39D6AE;
+  --yumi-warning: #FFD879;
+  --yumi-danger: #FF7CA8;
+  --yumi-shadow-card: 0 8px 24px rgba(0, 0, 0, .22);
+}
