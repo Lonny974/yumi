@@ -1,7 +1,7 @@
 <title>Yumi</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Sriracha&display=swap">
 <style>
 /* Yumi — design system « Frais & Moderne ».
    Les tokens de marque viennent de yumi-design-tokens.css (pack de marque) ; tout le reste en dérive.
@@ -226,7 +226,7 @@ body:not(.v-recettes) .app, body:not(.v-semaine) #planView, body:not(.v-courses)
 .screen-head h1 { font-size: var(--t-3xl); font-weight: 800; flex: 1; min-width: 0; }
 .brand { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
 .brand svg { width: 38px; height: 38px; border-radius: 10px; }
-.brand b { font-family: var(--font-heading); font-weight: 800; font-size: 1.6rem; letter-spacing: -0.04em; color: var(--primary-strong); }
+.brand b { font-family: Sriracha, var(--font-heading); font-weight: 400; font-size: 1.85rem; line-height: 1; display: inline-block; transform: skewX(11deg); color: var(--primary-strong); }
 :root[data-theme="dark"] .brand b { color: var(--ink); }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .brand b { color: var(--ink); } }
 .brand small { display: block; font-size: var(--t-xs); color: var(--muted); font-weight: 500; letter-spacing: 0; margin-top: -2px; }
@@ -578,16 +578,26 @@ body.show-detail .detail-pane { display: block; }
 <!-- Marque Yumi (pack de marque : yumi-app-icon.svg / yumi-logo.svg) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <linearGradient id="yumi-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#08796B"/><stop offset="100%" stop-color="#064E49"/></linearGradient>
+    <linearGradient id="yumi-bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0D8273"/><stop offset="100%" stop-color="#0A6A5F"/></linearGradient>
+    <!-- Logo Yumi : bol et deux feuilles, signature manuscrite -->
     <symbol id="yumi-mark" viewBox="0 0 1024 1024">
       <rect width="1024" height="1024" rx="224" fill="url(#yumi-bg)"/>
-      <g fill="#FFFFFF">
-        <path d="M512 572 C414 536 346 457 356 352 C438 368 500 423 512 497 C524 423 586 368 668 352 C678 457 610 536 512 572Z"/>
-        <path d="M512 612 C446 612 395 588 362 548 C398 526 451 529 512 558 C573 529 626 526 662 548 C629 588 578 612 512 612Z"/>
-        <path d="M470 627 L554 627 L554 702 C554 723 537 740 516 740 L508 740 C487 740 470 723 470 702Z"/>
-        <path d="M376 760 Q512 808 648 760 L648 790 Q512 846 376 790Z"/>
+      <g fill="#FFFFFF" transform="translate(512 545) scale(1.18) translate(-512 -378)">
+        <path d="M0 0 C-46 -40 -46 -122 0 -160 C46 -122 46 -40 0 0Z" transform="translate(468 372) rotate(-32)"/>
+        <path d="M0 0 C-68 -60 -68 -176 0 -232 C68 -176 68 -60 0 0Z" transform="translate(500 376) rotate(46)"/>
+        <path d="M292 392 H732 V404 C724 520 632 590 512 590 C392 590 300 520 292 404Z"/>
+        <rect x="446" y="582" width="132" height="34" rx="8"/>
       </g>
-      <path d="M590 248 C626 202 680 183 722 193 C712 238 675 276 624 281Z" fill="#FFD879"/>
+    </symbol>
+    <symbol id="yumi-icon" viewBox="0 0 1024 1024">
+      <rect width="1024" height="1024" rx="224" fill="url(#yumi-bg)"/>
+      <g fill="#FFFFFF">
+        <path d="M0 0 C-46 -40 -46 -122 0 -160 C46 -122 46 -40 0 0Z" transform="translate(468 372) rotate(-32)"/>
+        <path d="M0 0 C-68 -60 -68 -176 0 -232 C68 -176 68 -60 0 0Z" transform="translate(500 376) rotate(46)"/>
+        <path d="M292 392 H732 V404 C724 520 632 590 512 590 C392 590 300 520 292 404Z"/>
+        <rect x="446" y="582" width="132" height="34" rx="8"/>
+      </g>
+      <text transform="translate(512 858) skewX(9)" text-anchor="middle" font-family="Sriracha, cursive" font-size="260" fill="#FFFFFF">Yumi</text>
     </symbol>
   </defs>
 </svg>
@@ -880,10 +890,9 @@ body.show-detail .detail-pane { display: block; }
     const ph = `<span class="ph ph-${k || "autre"}">${svg(CAT_ART[k], { w: 1.4 })}</span>`;
     return `<span class="media ${cls}">${r.photo ? `<img src="${esc(r.photo)}" alt="" loading="lazy" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">` : ""}${ph}</span>`;
   }
-  const LOGO = `<svg class="logo" viewBox="0 0 920 300" role="img" aria-label="Yumi — Tes recettes. Tes repas. Tes courses.">
-    <svg width="300" height="300" viewBox="0 0 1024 1024"><use href="#yumi-mark"/></svg>
-    <text x="330" y="156" font-family="Plus Jakarta Sans, Inter, Arial, sans-serif" font-size="132" font-weight="800" letter-spacing="-5" fill="var(--primary-strong)">Yumi</text>
-    <text x="336" y="211" font-family="Inter, Arial, sans-serif" font-size="25" font-weight="500" fill="var(--muted)">Tes recettes. Tes repas. Tes courses.</text></svg>`;
+  const LOGO = `<svg class="logo" viewBox="0 0 600 340" role="img" aria-label="Yumi — Tes recettes. Tes repas. Tes courses.">
+    <svg x="180" y="0" width="240" height="240" viewBox="0 0 1024 1024"><use href="#yumi-icon"/></svg>
+    <text x="300" y="320" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="30" font-weight="500" fill="var(--muted)">Tes recettes. Tes repas. Tes courses.</text></svg>`;
 
   // ---------- Quantités : mise à l'échelle des portions ----------
   const FRAC = { "½": .5, "¼": .25, "¾": .75, "⅓": 1 / 3, "⅔": 2 / 3 };

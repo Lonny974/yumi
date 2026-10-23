@@ -15,8 +15,8 @@ head = """<!doctype html>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Yumi">
-<link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png?v=2">
+<link rel="icon" href="icons/icon-192.png?v=2">
 <link rel="manifest" href="manifest.webmanifest">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:0}body{margin:0;font:16px system-ui,sans-serif;background:#F7FAF8}@media (prefers-color-scheme:dark){body{background:#0D171B}}img{max-width:100%}[hidden]{display:none!important}html{height:100%;box-sizing:border-box}</style>
 </head>
@@ -31,7 +31,7 @@ cfg = "<script>window.RECETTES_CONFIG = " + cfg_file.read_text().strip() + ";</s
   "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
 }, ensure_ascii=False, indent=2))
-(out / "sw.js").write_text("""const CACHE = "yumi-v4";
+(out / "sw.js").write_text("""const CACHE = "yumi-v5";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
