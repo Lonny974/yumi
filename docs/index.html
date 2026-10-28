@@ -493,6 +493,10 @@ body.show-detail .detail-pane { display: block; }
 .choice small { color: var(--muted); font-size: var(--t-sm); }
 .photo-row { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
 .photo-row img { width: 84px; height: 84px; object-fit: cover; border-radius: var(--r-control); }
+.photo-pick { display: flex; gap: var(--s2); overflow-x: auto; padding: 2px; }
+.photo-pick button { flex: none; padding: 0; border: 3px solid transparent; border-radius: calc(var(--r-control) + 3px); background: none; cursor: pointer; }
+.photo-pick button[aria-pressed="true"] { border-color: var(--primary); }
+.photo-pick img { display: block; width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-control); }
 .danger-zone { border-top: 1px solid var(--line); padding-top: var(--s4); display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
 .menu-group { display: flex; flex-direction: column; gap: var(--s2); }
 .menu-group h3 { font-size: var(--t-lg); }
@@ -776,13 +780,13 @@ body.show-detail .detail-pane { display: block; }
     // Recettes envoyées par le raccourci « Partager » d'iOS (table a_importer).
     async function pullShared() {
       let rows;
-      try { rows = await rest("GET", null, "a_importer?select=id,url,texte,image&order=id"); } catch { return; }
+      try { rows = await rest("GET", null, "a_importer?select=*&order=id"); } catch { return; }
       if (!rows.length) return;
       rows.forEach((x) => {
-        const r = parseRecipe(x.texte || "", x.url || "");
         const img = (x.image || "").replace(/\s/g, "");
-        recipes.push({ ...r, id: uid(), favori: false, creeLe: Date.now(), aVerifier: true,
-          photo: !img ? "" : img.startsWith("http") || img.startsWith("data:") ? img : "data:image/jpeg;base64," + img });
+        const r = depuisPublication({ texte: x.texte, recette: x.recette, images: x.recette?.images,
+          image: !img ? "" : img.startsWith("http") || img.startsWith("data:") ? img : "data:image/jpeg;base64," + img }, x.url || "");
+        recipes.push({ ...r, id: uid(), favori: false, creeLe: Date.now(), aVerifier: true });
       });
       stamp("recettes"); persistAll();
       await rest("DELETE", null, "a_importer?id=in.(" + rows.map((x) => x.id).join(",") + ")");
@@ -1077,7 +1081,11 @@ body.show-detail .detail-pane { display: block; }
         const b = e.currentTarget; b.disabled = true; b.lastChild.textContent = "Lecture…";
         try {
           const d = await lirePublication(r.source);
-          if (d.texte && fillFromText(r, d.texte)) { if (!r.photo && d.image) { r.photo = d.image; save(); render(); } return; }
+          if ((d.recette || d.texte) && fillFromText(r, d.texte, depuisPublication(d, r.source))) {
+            if (!r.photo && d.image) { r.photo = d.image; save(); render(); }
+            if (d.images?.length > 1) { r.photosProposees = d.images; openEditor(r); }
+            return;
+          }
           toast("La publication n'a pas pu être lue");
         } catch { toast("Lecture impossible pour le moment"); }
         b.disabled = false; b.lastChild.textContent = "Relire la publication";
@@ -1095,8 +1103,7 @@ body.show-detail .detail-pane { display: block; }
   }
 
   // Complète une recette importée dont la légende n'avait pas pu être lue.
-  function fillFromText(r, text) {
-    const p = parseRecipe(text, r.source);
+  function fillFromText(r, text, p = parseRecipe(text, r.source)) {
     if (!p.ingredients.length && !p.etapes.length) { toast("Aucune recette trouvée dans ce texte"); return false; }
     const generic = !r.titre || /^Recette (Instagram|Facebook|TikTok|lien)/.test(r.titre);
     Object.assign(r, { ingredients: p.ingredients, etapes: p.etapes, notes: p.notes || r.notes, tags: p.tags.length ? p.tags : r.tags,
@@ -1404,6 +1411,11 @@ body.show-detail .detail-pane { display: block; }
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#sheetBack").hidden) closeSheet(); });
 
   let draftPhoto = "";
+  function setDraftPhoto(src) {
+    draftPhoto = src;
+    const prev = $("#f-photo-prev"); if (!prev) return;
+    prev.src = src; prev.hidden = !src; $("#rmPhoto").hidden = !src; $("#pickPhoto").lastChild.textContent = src ? "Changer la photo" : "Ajouter une photo";
+  }
   function openEditor(r, prefill) {
     const isNew = !r || !!prefill;
     if (prefill) r = prefill;
@@ -1437,6 +1449,8 @@ body.show-detail .detail-pane { display: block; }
             <button type="button" class="btn btn-secondary" id="pickPhoto">${ICON.camera}${draftPhoto ? "Changer la photo" : "Ajouter une photo"}</button>
             <button type="button" class="btn btn-text" id="rmPhoto" ${draftPhoto ? "" : "hidden"}>Retirer</button>
           </div>
+          ${(r.photosProposees || []).length > 1 ? `<small>Photos de la publication : touche celle que tu préfères.</small>
+          <div class="photo-pick">${r.photosProposees.map((src, i) => `<button type="button" data-pick="${i}" aria-label="Photo ${i + 1}" aria-pressed="${src === draftPhoto}"><img src="${esc(src)}" alt=""></button>`).join("")}</div>` : ""}
         </div>
         ${isNew ? "" : `<div class="danger-zone"><button type="button" class="btn btn-danger" id="delEd">${ICON.trash}Supprimer la recette</button><span id="delConfirm" hidden><button type="button" class="btn btn-danger" id="delYes" style="background:var(--danger);color:#fff">Oui, supprimer</button></span></div>`}
         <button class="btn btn-primary btn-block" type="submit">Enregistrer</button>
@@ -1447,7 +1461,11 @@ body.show-detail .detail-pane { display: block; }
     $("#edForm").onsubmit = (e) => { e.preventDefault(); doSave(); };
     $("#saveEd").onclick = doSave;
     $("#pickPhoto").onclick = () => $("#photoFile").click();
-    $("#rmPhoto").onclick = () => { draftPhoto = ""; $("#f-photo-prev").hidden = true; $("#rmPhoto").hidden = true; $("#pickPhoto").lastChild.textContent = "Ajouter une photo"; };
+    document.querySelectorAll("[data-pick]").forEach((b) => b.onclick = () => {
+      setDraftPhoto(r.photosProposees[+b.dataset.pick]);
+      document.querySelectorAll("[data-pick]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    });
+    $("#rmPhoto").onclick = () => { setDraftPhoto(""); document.querySelectorAll("[data-pick]").forEach((x) => x.setAttribute("aria-pressed", false)); };
     if (!isNew) {
       $("#delEd").onclick = () => { $("#delConfirm").hidden = false; $("#delEd").hidden = true; $("#delYes").focus(); };
       $("#delYes").onclick = () => {
@@ -1466,7 +1484,7 @@ body.show-detail .detail-pane { display: block; }
         tags: $("#f-tags").value.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean), photo: draftPhoto, source: $("#f-source").value.trim(),
       };
       if (isNew) { const n = { id: uid(), favori: false, creeLe: Date.now(), ...data }; recipes.push(n); state.selected = n.id; }
-      else { Object.assign(r, data, { exemple: false, aVerifier: false }); }
+      else { Object.assign(r, data, { exemple: false, aVerifier: false }); delete r.photosProposees; }
       state.portions = null; state.view = "recettes";
       save(); closeSheet(); render(); toast(isNew ? "Recette ajoutée" : "Modifications enregistrées");
     }
@@ -1480,9 +1498,7 @@ body.show-detail .detail-pane { display: block; }
       const max = 1200, s = Math.min(1, max / Math.max(img.width, img.height));
       const c = document.createElement("canvas"); c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      draftPhoto = c.toDataURL("image/jpeg", 0.8); URL.revokeObjectURL(url);
-      const prev = $("#f-photo-prev"); if (!prev) return;
-      prev.src = draftPhoto; prev.hidden = false; $("#rmPhoto").hidden = false; $("#pickPhoto").lastChild.textContent = "Changer la photo";
+      setDraftPhoto(c.toDataURL("image/jpeg", 0.8)); URL.revokeObjectURL(url);
     };
     img.onerror = () => toast("Cette image n'a pas pu être lue");
     img.src = url;
@@ -1511,11 +1527,18 @@ body.show-detail .detail-pane { display: block; }
     const base = (s.url || c.supabaseUrl || "").replace(/\/+$/, ""), key = s.key || c.supabaseKey || "";
     if (!base) throw new Error("config");
     const r = await fetch(base + "/functions/v1/lire-publication", {
-      method: "POST", headers: { "Content-Type": "application/json", apikey: key }, body: JSON.stringify({ url }),
+      method: "POST", headers: { "Content-Type": "application/json", apikey: key }, body: JSON.stringify({ url, categories: categories().map(([c]) => c) }),
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.erreur || "http " + r.status);
     return data;
+  }
+  // Fiche à partir de ce qu'a renvoyé le lecteur : celle relue par Claude si elle existe, sinon la légende analysée ici.
+  function depuisPublication(d, url) {
+    const f = d.recette;
+    const r = f ? { titre: f.titre || "Recette " + sourceName(url), categorie: f.categorie || "", source: url, prep: f.prep || 0, cuisson: f.cuisson || 0,
+      portions: f.portions || 4, ingredients: f.ingredients || [], etapes: f.etapes || [], notes: f.notes || "", tags: f.tags || [] } : parseRecipe(d.texte || "", url);
+    return { ...r, photo: d.image || "", ...(d.images?.length > 1 ? { photosProposees: d.images } : {}) };
   }
   function openLink(lien = "") {
     openSheet(`
@@ -1540,7 +1563,7 @@ body.show-detail .detail-pane { display: block; }
       err.hidden = true; go.disabled = true; go.lastChild.textContent = "Lecture de la publication…";
       try {
         const d = await lirePublication(url);
-        if (d.texte) { openEditor(null, { ...parseRecipe(d.texte, url), photo: d.image || "" }); return; }
+        if (d.recette || d.texte) { openEditor(null, depuisPublication(d, url)); return; }
         err.textContent = "La publication n'a pas pu être lue (compte privé, ou Instagram a refusé). Tu peux coller son texte à la main.";
       } catch (x) {
         err.textContent = x.message === "config" ? "La synchro Supabase n'est pas configurée." : /fetch|load|network|http 404/i.test(x.message) ? "Le lecteur de publications n'est pas encore installé dans Supabase, ou la connexion a échoué." : x.message;

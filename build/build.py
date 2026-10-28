@@ -31,7 +31,7 @@ cfg = "<script>window.RECETTES_CONFIG = " + cfg_file.read_text().strip() + ";</s
   "icons": [{"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
             {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]
 }, ensure_ascii=False, indent=2))
-(out / "sw.js").write_text("""const CACHE = "yumi-v5";
+(out / "sw.js").write_text("""const CACHE = "yumi-v6";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-180.png", "icons/icon-192.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))); self.clients.claim(); });
