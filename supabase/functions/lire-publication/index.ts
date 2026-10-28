@@ -3,7 +3,12 @@
 // Avec { enregistrer: true }, elle range aussi la recette dans la file a_importer (pour le raccourci iOS).
 // Si Instagram ou Facebook refusent l'aperçu et que le secret BRIGHTDATA_API_KEY existe, elle passe par
 // l'API Web Scraper de Bright Data. La clé reste dans les secrets Supabase, jamais dans le code.
-import { encodeBase64 } from "jsr:@std/encoding@1/base64";
+// Base64 sans dépendance externe (le téléchargement de paquets peut échouer au déploiement).
+const encodeBase64 = (buf: Uint8Array) => {
+  let bin = "";
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  return btoa(bin);
+};
 
 const HOTES = /(^|\.)(instagram\.com|facebook\.com|fb\.com|fb\.watch)$/i;
 const CORS = {
